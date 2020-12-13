@@ -1,72 +1,105 @@
 require 'pp'
 require 'pry'
 
-dirs = File.readlines('input12.txt').map { |l| l.match(/([A-Z])(\d+)/).captures }.map { |l| [l[0], l[1].to_i] }
+class Ship
+  attr_accessor :north
+  attr_accessor :west
 
-ship = {
-  heading: 90,
-  north: 0,
-  west: 0,
-}
+  attr_accessor :waypoint
 
-def turn(ship, dir)
-  case dir[0]
-  when 'R'
-    ship[:heading] += dir[1]
-  when 'L'
-    ship[:heading] -= dir[1]
+  def initialize(waypoint:)
+    @north = 0
+    @west = 0
+
+    @waypoint = Waypoint.new(*waypoint)
   end
-  ship[:heading] = (ship[:heading] % 360).abs
-  ship
+
+  def run(dirs)
+    dirs.each do |dir|
+      command = dir[0]
+      value = dir[1]
+      if %w{L R}.include? command
+        waypoint.turn(dir)
+      elsif %w{N W E S}.include? command
+        waypoint.move(dir)
+      elsif command == 'F'
+        forward(dir)
+      end
+      pp [dir, to_h]
+    end
+  end
+
+  def to_h
+    {
+      north: north,
+      west: west,
+      waypoint: {
+        north: waypoint.north,
+        west: waypoint.west,
+      }
+    }
+  end
+
+  def forward(dir)
+    self.north += waypoint.north * dir[1]
+    self.west  += waypoint.west  * dir[1]
+  end
 end
 
-def move_dir(ship, dir)
-  case dir[0]
-  when 'N'
-    ship[:north] += dir[1]
-  when 'S'
-    ship[:north] -= dir[1]
-  when 'W'
-    ship[:west]  += dir[1]
-  when 'E'
-    ship[:west]  -= dir[1]
-  end
-  ship
-end
+class Waypoint
+  attr_accessor :north
+  attr_accessor :west
 
-def move_forward(ship, dir)
-  ship
-  case ship[:heading]
-  when 0
-    ship[:north] += dir[1]
-  when 90
-    ship[:west]  -= dir[1]
-  when 180
-    ship[:north] -= dir[1]
-  when 270
-    ship[:west]  += dir[1]
+  def initialize(north, west)
+    @north = north
+    @west = west
   end
-  ship
+
+  def turn(dir)
+    if dir[0] == 'R'
+      case dir[1]
+      when 90
+        self.west,  self.north = -1 *  self.north,     self.west
+      when 180
+        self.north, self.west  = -1 * self.north, -1 * self.west
+      when 270
+        self.west,  self.north =      self.north, -1 * self.west
+      end
+    end
+
+    if dir[0] == 'L'
+      case dir[1]
+      when 90
+        self.west,  self.north =      self.north, -1 * self.west
+      when 180
+        self.north, self.west  = -1 * self.north, -1 * self.west
+      when 270
+        self.west,  self.north = -1 * self.north,      self.west
+      end
+    end
+  end
+
+  def move(dir)
+    case dir[0]
+    when 'N'
+      self.north += dir[1]
+    when 'S'
+      self.north -= dir[1]
+    when 'W'
+      self.west  += dir[1]
+    when 'E'
+      self.west  -= dir[1]
+    end
+  end
 end
 
 def manhattan(ship)
-  ship[:north].abs + ship[:west].abs
+  ship.north.abs + ship.west.abs
 end
 
-def run(ship, dirs)
-  dirs.each do |dir|
-    command = dir[0]
-    value = dir[1]
-    ship = if %w{L R}.include? command
-             turn(ship, dir)
-           elsif %w{N W E S}.include? command
-             move_dir(ship, dir)
-           elsif command == 'F'
-             move_forward(ship, dir)
-           end
-  end
-  ship
-end
 
-pp run(ship, dirs)
+dirs = File.readlines('input12.txt').map { |l| l.match(/([A-Z])(\d+)/).captures }.map { |l| [l[0], l[1].to_i] }
+ship = Ship.new(waypoint: [1, -10])
+ship.run(dirs)
+
 pp manhattan(ship)
