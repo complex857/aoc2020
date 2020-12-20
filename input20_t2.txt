@@ -1,0 +1,14 @@
+Tile 1:
+dxc
+axb
+123
+
+Tile 2:
+123
+gxg
+456
+
+Tile 3:
+456
+000
+ooo
