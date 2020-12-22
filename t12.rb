@@ -25,7 +25,7 @@ class Ship
       elsif command == 'F'
         forward(dir)
       end
-      pp [dir, to_h]
+      # pp [dir, to_h]
     end
   end
 
